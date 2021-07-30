@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+
+{% block title %}
+    Добавление вопроса
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <form action="" method="post">
+            <input type="text">
+            <div>
+                <input type="radio" name="subject" value="Русский">
+                <input type="radio" name="subject" value="Математика">
+                <input type="radio" name="subject" value="aleg">
+            </div>
+
+            <input type="submit">
+        </form>
+    </div>
+{% endblock %}

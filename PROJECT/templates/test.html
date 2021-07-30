@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+
+{% block title %}
+    Прохождение теста
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <form>
+            {% for index in range(test_questions|length) %}
+                <div>
+                    <h1>{{ test_questions[index].questionText }}</h1>
+                    {% if types_array[index]== "QuestionRadio" %}
+                        <div>
+                            {% for variant in test_questions[index].questionAnswerVariants %}
+                                <div>
+                                    <input type="radio" name="{{ "q" + index|string }}" id="{{ "qr" + index|string }}"
+                                           value="{{ variant }}">
+                                    <label for="{{ "qr" + index|string }}">{{ variant }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if types_array.index == "QuestionCheckbox" %}
+                        <div>
+                            {% for variant in test_questions[index].questionAnswerVariants %}
+                                <div>
+                                    <input type="checkbox" name="{{ "q" + index|string }}"
+                                           id="{{ "qc" + index|string }}"
+                                           value="{{ variant }}">
+                                    <label for="{{ "qc" + index|string }}">{{ variant }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if types_array.index == "QuestionText" %}
+                        <div>
+                            {% if test_questions[index].answerType == "string" %}
+                                <div>
+                                    <input type="text">
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            {#            {{ test_questions.0.questionText }}#}
+            <input type="submit" class="btn btn-success">
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+
+{% block title %}
+    Подсчёт вероятности поступления
+{% endblock %}
+
+{% block body %}
+    <form method="post" class="container">
+        {% for question in questions %}
+            <div class="container">
+                <span>Вопрос {{ question.0 }}</span><br>
+                <label><input type="radio" name="{{ "q" + question.1|string }}" value="Да"> Да</label>
+                <label><input type="radio" name="{{ "q" + question.1|string }}" value="Нет"> Нет</label>
+            </div>
+        {% endfor %}
+        <input type="submit" class="btn btn-success">
+    </form>
+{% endblock %}

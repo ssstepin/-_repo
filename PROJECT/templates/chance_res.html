@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+
+{% block title %}
+    Результат
+{% endblock %}
+
+{% block body %}
+    <div class="container alert-info">
+        <h1>Вы гей!</h1>
+        <p>Ваш результат {{ result }}</p>
+        <p>Так же ответили: {{ same }}</p>
+    </div>
+    <br>
+    <div class="container">
+        <a class="btn btn-danger" href="/delete">Удолить</a>
+    </div>
+{% endblock %}
