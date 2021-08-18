@@ -1,4 +1,4 @@
-import classes
+from IVR_app import classes
 
 
 class Question(object):
@@ -35,8 +35,8 @@ class QuestionCheckbox(Question):
 
 
 class QuestionRadio(Question):
-    def __init__(self, text: str, answer: str, variants: list, q_id: int):
-        super(QuestionRadio, self).__init__(text, list(answer), q_id)
+    def __init__(self, text: str, answer: list, variants: list, q_id: int):
+        super(QuestionRadio, self).__init__(text, answer, q_id)
         self.questionAnswerVariants = variants
 
     def debug_print(self):
@@ -49,7 +49,7 @@ class QuestionRadio(Question):
 
 class QuestionText(Question):
     def __init__(self, text: str, answer: list, ans_type: str, q_id: int):
-        super(QuestionText, self).__init__(text, answer[0], q_id)
+        super(QuestionText, self).__init__(text, answer, q_id)
         self.questionAnswerType = ans_type
 
     def debug_print(self):

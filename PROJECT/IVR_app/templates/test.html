@@ -7,12 +7,12 @@
 
 {% block body %}
     <div class="container">
-        <form>
+        <form method="post" action="">
             {% for index in range(test_questions|length) %}
-                <div>
-                    <h1>{{ test_questions[index].questionText }}</h1>
+                <div class = "card" style="margin: 5rem auto 5rem">
+                    <h1 class="card-header text-center">{{ test_questions[index].questionText }}</h1>
                     {% if types_array[index]== "QuestionRadio" %}
-                        <div>
+                        <div class="card-body p-5">
                             {% for variant in test_questions[index].questionAnswerVariants %}
                                 <div>
                                     <input type="radio" name="{{ "q" + index|string }}" id="{{ "qr" + index|string }}"
@@ -22,8 +22,8 @@
                             {% endfor %}
                         </div>
                     {% endif %}
-                    {% if types_array.index == "QuestionCheckbox" %}
-                        <div>
+                    {% if types_array[index] == "QuestionCheckbox" %}
+                        <div class="card-body p-5">
                             {% for variant in test_questions[index].questionAnswerVariants %}
                                 <div>
                                     <input type="checkbox" name="{{ "q" + index|string }}"
@@ -34,9 +34,10 @@
                             {% endfor %}
                         </div>
                     {% endif %}
-                    {% if types_array.index == "QuestionText" %}
-                        <div>
-                            {% if test_questions[index].answerType == "string" %}
+                    {% if types_array[index] == "QuestionText" %}
+                        <div class="card-body p-5">
+                            <p> {{ test_questions.index.questionAnswerType }} </p>
+                            {% if test_questions[index].questionAnswerType == "string" %}
                                 <div>
                                     <input type="text">
                                 </div>

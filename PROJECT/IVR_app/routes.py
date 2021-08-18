@@ -1,52 +1,9 @@
 from flask import Flask, render_template, request, redirect
-from flask_sqlalchemy import SQLAlchemy
-
-import classes
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///project.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-
-secret_key = "seemeenokap"
-
-result = cl = same = 0
 
 
-# Таблицы 
-class UserAnswers(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    answer1 = db.Column(db.String(100), nullable=False)
-    answer2 = db.Column(db.String(100), nullable=False)
-    answer3 = db.Column(db.String(100), nullable=False)
-    answer4 = db.Column(db.String(100), nullable=False)
-    answer5 = db.Column(db.String(100), nullable=False)
-    answer6 = db.Column(db.String(100), nullable=False)
-    answer7 = db.Column(db.String(100), nullable=False)
-    answer8 = db.Column(db.String(100), nullable=False)
-    answer9 = db.Column(db.String(100), nullable=False)
-    answer10 = db.Column(db.String(100), nullable=False)
-
-
-class Questions(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    subject = db.Column(db.String(100), nullable=False)
-    text = db.Column(db.Text(), nullable=False)
-    answer_type = db.Column(db.String(100), nullable=False)
-    question_type = db.Column(db.String(100), nullable=False)
-
-
-class QuestionsAnswers(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    question_id = db.Column(db.Integer, nullable=False)
-    answer = db.Column(db.Text(), nullable=False)
-
-
-class QuestionsVariants(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    question_id = db.Column(db.Integer, nullable=False)
-    variant = db.Column(db.Text(), nullable=False)
-
+from IVR_app import app, db
+from .models import UserAnswers, QuestionsAnswers, QuestionsVariants, Questions
+from .classes import *
 
 # Функции для формы с шансом
 def get_questions_chance():
@@ -153,20 +110,30 @@ def get_questions_test_subject(subject):
     questions_arr = []
     for elem in questions:
         if elem.question_type == "QuestionCheckbox":
-            q = classes.QuestionCheckbox(elem.text, [], get_variants_by_id(elem.id), elem.id)
+            q = classes.QuestionCheckbox(elem.text, get_answer_by_id(elem.id), get_variants_by_id(elem.id), elem.id)
         if elem.question_type == "QuestionRadio":
-            q = classes.QuestionRadio(elem.text, "aleg", get_variants_by_id(elem.id), elem.id)
+            q = classes.QuestionRadio(elem.text, get_answer_by_id(elem.id), get_variants_by_id(elem.id), elem.id)
         if elem.question_type == "QuestionText":
-            q = classes.QuestionText("ggg", ["3t3"], "string", elem.id)
+            q = classes.QuestionText(elem.text, get_answer_by_id(elem.id), elem.answer_type, elem.id)
         questions_arr.append(q)
     return questions_arr
 
 
-def add_question(q_dict):
+def add_question(q_dict, q_ans, q_var):
     question = Questions(subject=q_dict['subject'], text=q_dict['text'], answer_type=q_dict['answer_type'],
                          question_type=q_dict['question_type'])
     db.session.add(question)
     db.session.commit()
+
+    for var in q_var:
+        nvariant = QuestionsVariants(question_id=question.id, variant=var)
+        db.session.add(nvariant)
+        db.session.commit()
+
+    for ans in q_ans:
+        nanswer = QuestionsAnswers(question_id=question.id, answer=ans)
+        db.session.add(nanswer)
+        db.session.commit()
 
 
 def get_variants_by_id(qid):
@@ -181,7 +148,7 @@ def get_answer_by_id(qid):
     answers_db = QuestionsAnswers.query.filter(QuestionsAnswers.question_id == qid).all()
     answers = []
     for elem in answers_db:
-        answers.append(elem.variant)
+        answers.append(elem.answer)
     return answers
 
 
@@ -218,17 +185,41 @@ def delete():
     return redirect('/')
 
 
-@app.route('/test')
-def test():
+@app.route('/testall')
+def testall():
     new_test = classes.Test(get_questions_test_subject('aleg'), 'aleg')
     return render_template("test.html", test_questions=new_test.questions, types_array=new_test.types_arr())
     # return render_template("test.html", test_questions=get_questions_test_subject("aleg"))
 
 
-@app.route('/addtestquestion')
+@app.route('/admin', methods=['POST', 'GET'])
 def add():
-    render_template("addq.html")
+    if request.method == "POST":
+        q_d = {}
+        q_d['subject'] = request.form["question-subject"]
+        q_d['answer_type'] = request.form["question-answer-type"]
+        q_d['question_type'] = request.form["question-type"]
+        q_d['text'] = request.form["question-text"]
+
+        q_a = [request.form["question-answer"]]
+
+        q_v = [request.form["question-variant" + str(i + 1)] for i in range(3)]
+
+        add_question(q_d, q_a, q_v)
+
+    return render_template("addq.html")
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/test', methods=['POST', 'GET'])
+def test_ch():
+    if request.method == "POST":
+        print(str(request.form.get('subject')))
+        return redirect('/test/' + str(request.form.get('subject')) + '/' + str(request.form['q-num']))
+    else:
+        return render_template('test_ch.html')
+
+
+@app.route('/test/<subj>/<num>', methods=['POST', 'GET'])
+def test(subj, num):
+    print(subj, num)
+    return subj, num

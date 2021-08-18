@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Выбор теста
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <form method="post" action="">
+            <div class="p-5">
+                <h1>Выберите предмет</h1>
+                <select class="form-select" name="subject">
+                    <option value="rus">Русский</option>
+                    <option value="math">Математика</option>
+                    <option value="inf">Информатика</option>
+                    <option value="all">Комплексный</option>
+                </select>
+            </div>
+            <div class="p-5">
+                <h1>Выберите количество вопросов</h1>
+                <span>3</span><input type="range" class="form-range" name="q-num" max="10" min="3" step="1"><span
+                    style="float: right">10</span>
+            </div>
+            <div>
+                <input type="submit" class="btn btn-success">
+            </div>
+        </form>
+    </div>
+
+{% endblock %}
