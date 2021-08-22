@@ -39,7 +39,7 @@
                             <p> {{ test_questions.index.questionAnswerType }} </p>
                             {% if test_questions[index].questionAnswerType == "string" %}
                                 <div>
-                                    <input type="text">
+                                    <input type="text" name="{{ "q" + index|string }}">
                                 </div>
                             {% endif %}
                         </div>

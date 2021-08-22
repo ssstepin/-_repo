@@ -1,9 +1,13 @@
-from flask import Flask, render_template, request, redirect
-
+from flask import Flask, render_template, request, redirect, jsonify
+import random
 
 from IVR_app import app, db
-from .models import UserAnswers, QuestionsAnswers, QuestionsVariants, Questions
+from .models import *
 from .classes import *
+
+result = cl = same = 0
+done_test = cur_test = []  # done_test - classes.TestDone; cur_test - classes.Test
+
 
 # Функции для формы с шансом
 def get_questions_chance():
@@ -195,17 +199,20 @@ def testall():
 @app.route('/admin', methods=['POST', 'GET'])
 def add():
     if request.method == "POST":
-        q_d = {}
-        q_d['subject'] = request.form["question-subject"]
-        q_d['answer_type'] = request.form["question-answer-type"]
-        q_d['question_type'] = request.form["question-type"]
-        q_d['text'] = request.form["question-text"]
+        if request.form["question-subject"] and request.form["question-answer-type"] and request.form[
+            "question-type"] and request.form["question-text"] and [request.form["question-answer"]]:
+            q_d = {}
+            q_d['subject'] = request.form["question-subject"]
+            q_d['answer_type'] = request.form["question-answer-type"]
+            q_d['question_type'] = request.form["question-type"]
+            q_d['text'] = request.form["question-text"]
 
-        q_a = [request.form["question-answer"]]
+            q_a = [request.form["question-answer"]]
 
-        q_v = [request.form["question-variant" + str(i + 1)] for i in range(3)]
+            q_v = [request.form.get("question-variant" + str(i + 1)) for i in range(3)]
 
-        add_question(q_d, q_a, q_v)
+            print(q_d)
+            add_question(q_d, q_a, q_v)
 
     return render_template("addq.html")
 
@@ -221,5 +228,30 @@ def test_ch():
 
 @app.route('/test/<subj>/<num>', methods=['POST', 'GET'])
 def test(subj, num):
-    print(subj, num)
-    return subj, num
+    global cur_test
+    global done_test
+
+    if request.method == 'POST':
+        ans_arr = []
+        for i in range(10):
+            try:
+                if request.form['q' + str(i)]:
+                    ans_arr.append(request.form.getlist('q' + str(i)))
+            except:
+                pass
+        # print(ans_arr)
+        #print(cur_test)
+        done_test = TestDone(cur_test.questions, cur_test.subject, ans_arr)
+
+
+        return render_template('test_res.html', ans_arr=done_test.userAnswers, q_arr=done_test.questions,
+                               rw_arr=done_test.get_rw())
+    else:
+        questions_r = random.sample(get_questions_test_subject(subj), int(num))
+
+        # new_test = classes.Test(get_questions_test_subject(subj), subj)
+        new_test = Test(questions_r, subj)
+        cur_test = new_test
+        #print(cur_test)
+
+        return render_template("test.html", test_questions=new_test.questions, types_array=new_test.types_arr())
