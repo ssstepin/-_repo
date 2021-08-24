@@ -33,3 +33,25 @@ class QuestionsVariants(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question_id = db.Column(db.Integer, nullable=False)
     variant = db.Column(db.Text(), nullable=False)
+
+
+class Users(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_login = db.Column(db.String(100), nullable=False)
+    user_password = db.Column(db.String(100), nullable=False)
+
+    def __init__(self, login, id):
+        self.user_login = login
+        self.id = str(id)
+
+    def is_active(self):
+        return True
+
+    def is_authenticated(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return self.id

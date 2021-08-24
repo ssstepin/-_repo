@@ -1,7 +1,9 @@
-from flask import Flask, render_template, request, redirect, jsonify
+from flask import Flask, render_template, request, redirect, jsonify, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 import random
+from flask_login import login_user, login_required, logout_user, current_user
 
-from IVR_app import app, db
+from IVR_app import db
 from .models import *
 from .classes import *
 
@@ -156,10 +158,30 @@ def get_answer_by_id(qid):
     return answers
 
 
+# Управление пользователями
+
+def add_new_user(user_login, user_password):
+    new_u = Users(user_login=user_login, user_password=generate_password_hash(user_password))
+    db.session.add(new_u)
+    db.session.commit()
+
+
+def check_user(user_login, user_password):
+    this_user = Users.query.filter(Users.user_login == user_login)
+    arr = []
+    for elem in this_user:
+        arr.append(elem)
+
+    if len(arr) > 0:
+        return check_password_hash(this_user.first().user_password, user_password)
+
+    return False
+
+
 # Тело сайта
 @app.route('/')
 def hello_world():
-    return render_template('base.html')
+    return render_template('base.html', cur_user=current_user)
 
 
 @app.route('/chance', methods=['POST', 'GET'])
@@ -173,17 +195,18 @@ def calc_chance():
         cl = chance_list()
         return redirect('/chance/result')
     else:
-        return render_template("chance.html", questions=get_questions_chance())
+        return render_template("chance.html", questions=get_questions_chance(), cur_user=current_user)
 
 
 @app.route('/chance/result')
 def show_res():
     # to_bd_chance()
-    return render_template("chance_res.html", result=result, same=same)
+    return render_template("chance_res.html", result=result, same=same, cur_user=current_user)
     # return "Hello"
 
 
 @app.route('/delete', methods=['POST', 'GET'])
+@login_required
 def delete():
     delete_chance()
     return redirect('/')
@@ -192,7 +215,8 @@ def delete():
 @app.route('/testall')
 def testall():
     new_test = classes.Test(get_questions_test_subject('aleg'), 'aleg')
-    return render_template("test.html", test_questions=new_test.questions, types_array=new_test.types_arr())
+    return render_template("test.html", test_questions=new_test.questions, types_array=new_test.types_arr(),
+                           cur_user=current_user)
     # return render_template("test.html", test_questions=get_questions_test_subject("aleg"))
 
 
@@ -214,19 +238,21 @@ def add():
             print(q_d)
             add_question(q_d, q_a, q_v)
 
-    return render_template("addq.html")
+    return render_template("addq.html", cur_user=current_user)
 
 
 @app.route('/test', methods=['POST', 'GET'])
+@login_required
 def test_ch():
     if request.method == "POST":
         print(str(request.form.get('subject')))
         return redirect('/test/' + str(request.form.get('subject')) + '/' + str(request.form['q-num']))
     else:
-        return render_template('test_ch.html')
+        return render_template('test_ch.html', cur_user=current_user)
 
 
 @app.route('/test/<subj>/<num>', methods=['POST', 'GET'])
+@login_required
 def test(subj, num):
     global cur_test
     global done_test
@@ -240,18 +266,62 @@ def test(subj, num):
             except:
                 pass
         # print(ans_arr)
-        #print(cur_test)
+        # print(cur_test)
         done_test = TestDone(cur_test.questions, cur_test.subject, ans_arr)
 
-
         return render_template('test_res.html', ans_arr=done_test.userAnswers, q_arr=done_test.questions,
-                               rw_arr=done_test.get_rw())
+                               rw_arr=done_test.get_rw(), cur_user=current_user)
     else:
         questions_r = random.sample(get_questions_test_subject(subj), int(num))
 
         # new_test = classes.Test(get_questions_test_subject(subj), subj)
         new_test = Test(questions_r, subj)
         cur_test = new_test
-        #print(cur_test)
+        # print(cur_test)
 
-        return render_template("test.html", test_questions=new_test.questions, types_array=new_test.types_arr())
+        return render_template("test.html", test_questions=new_test.questions, types_array=new_test.types_arr(),
+                               cur_user=current_user)
+
+
+@app.route('/register', methods=['POST', 'GET'])
+def register():
+    if request.method == 'POST':
+        n_login = request.form.get('login')
+        n_pass = request.form.get('password')
+
+        if n_login and n_pass:
+            add_new_user(n_login, n_pass)
+            return redirect('/')
+
+    return render_template('register.html', cur_user=current_user)
+
+
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    if request.method == 'POST':
+        u_login = request.form.get('login')
+        u_pass = request.form.get('password')
+
+        if u_login and u_pass:
+            if check_user(u_login, u_pass):
+                cur_user = Users.query.filter(Users.user_login == u_login).first()
+                login_user(cur_user)
+                flash('You were successfully logged in!', 'alert alert-success')
+                return redirect('/')
+            else:
+                flash('You shall not pass!', 'alert alert-danger')
+                return render_template('login.html', cur_user=current_user)
+
+    return render_template('login.html', cur_user=current_user)
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect('/')
+
+
+@app.errorhandler(401)
+def page_not_found(e):
+    flash('Log in first!', 'alert alert-warning')
+    return redirect('/login')
