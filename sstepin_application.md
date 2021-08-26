@@ -30,7 +30,7 @@
 <ul>
   <li>Excel, Google формы, MySQL - сбор, хранение, сортировка собранных данных</li>
   <li>HTML, CSS, JS - frontend часть</li>
-  <li>PHP, SQL (возможно Python) - backend(расчет по формуле, БД)</li>
+  <li>Python (flask), SQL - backend(расчет по формуле, БД)</li>
 </ul>
 <h3>[ЭТАПЫ РАЗРАБОТКИ]</h3>
 <ol>
