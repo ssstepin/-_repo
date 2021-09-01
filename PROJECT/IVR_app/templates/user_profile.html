@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Личный кабинет
+{% endblock %}
+
+{% block body %}
+    <h1 class="text-center">{{ cur_user.user_login }}</h1>
+    <br>
+    <h2 class="text-center"><a href="profile/tests">Пройденные тесты</a></h2>
+    <br>
+    <h2 class="text-center"><a href="profile/chance">Шанс на поступление</a></h2>
+{% endblock %}

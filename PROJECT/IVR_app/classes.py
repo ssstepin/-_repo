@@ -2,10 +2,11 @@ from IVR_app import classes
 
 
 class Question(object):
-    def __init__(self, text: str, answer: list, q_id: int):
+    def __init__(self, text: str, answer: list, q_id: int, subject: str):
         self.questionText = text
         self.questionAnswer = answer
         self.id = q_id
+        self.subject = subject
 
     def debug_print(self):
         print("Text:", self.questionText)
@@ -22,8 +23,8 @@ class Question(object):
 
 
 class QuestionCheckbox(Question):
-    def __init__(self, text: str, answer: list, variants: list, q_id: int):
-        super(QuestionCheckbox, self).__init__(text, answer, q_id)
+    def __init__(self, text: str, answer: list, variants: list, q_id: int, subject: str):
+        super(QuestionCheckbox, self).__init__(text, answer, q_id, subject)
         variants_plus = variants + list(answer)
         self.questionAnswerVariants = variants_plus
 
@@ -36,8 +37,8 @@ class QuestionCheckbox(Question):
 
 
 class QuestionRadio(Question):
-    def __init__(self, text: str, answer: list, variants: list, q_id: int):
-        super(QuestionRadio, self).__init__(text, answer, q_id)
+    def __init__(self, text: str, answer: list, variants: list, q_id: int, subject: str):
+        super(QuestionRadio, self).__init__(text, answer, q_id, subject)
         variants_plus = variants + list(answer)
         self.questionAnswerVariants = variants_plus
 
@@ -50,8 +51,8 @@ class QuestionRadio(Question):
 
 
 class QuestionText(Question):
-    def __init__(self, text: str, answer: list, ans_type: str, q_id: int):
-        super(QuestionText, self).__init__(text, answer, q_id)
+    def __init__(self, text: str, answer: list, ans_type: str, q_id: int, subject: str):
+        super(QuestionText, self).__init__(text, answer, q_id, subject)
         self.questionAnswerType = ans_type
 
     def debug_print(self):
@@ -80,6 +81,9 @@ class TestDone(Test):
         self.questions = question_arr
         self.subject = subject
         self.userAnswers = u_ans
+        
+    def types_arr(self):
+        return super(TestDone, self).types_arr()
 
     def get_rw(self):
         arr = []

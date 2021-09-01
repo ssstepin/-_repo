@@ -7,16 +7,16 @@
 {% block body %}
     <h1 class="text-center">Результаты</h1>
     <div class="container">
-        {% for i in range(ans_arr|length) %}
-            {% if rw_arr[i] %}
-                <div class="alert alert-success">
-            {% else %}
-                <div class="alert alert-danger">
-            {% endif %}
-             <h2>{{ q_arr[i].questionText }}</h2>
-            <h3>Правильный ответ: {% for ans in q_arr[i].questionAnswer %} {{ans}} {% endfor %} </h3>
-        </div>
-        {% endfor %}
+    {% for i in range(q_arr|length) %}
+        {% if rw_arr[i] %}
+            <div class="alert alert-success">
+        {% else %}
+            <div class="alert alert-danger">
+        {% endif %}
+    <h2>{{ q_arr[i].questionText }}</h2>
+    <h3>Правильный ответ: {% for ans in q_arr[i].questionAnswer %} {{ ans }} {% endfor %} </h3>
     </div>
+    {% endfor %}
+</div>
 {% endblock %}
 

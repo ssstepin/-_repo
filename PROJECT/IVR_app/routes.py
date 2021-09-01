@@ -1,9 +1,8 @@
-from flask import Flask, render_template, request, redirect, jsonify, flash
+from flask import Flask, render_template, request, redirect, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import random
 from flask_login import login_user, login_required, logout_user, current_user
 
-from IVR_app import db
 from .models import *
 from .classes import *
 
@@ -116,11 +115,11 @@ def get_questions_test_subject(subject):
     questions_arr = []
     for elem in questions:
         if elem.question_type == "QuestionCheckbox":
-            q = classes.QuestionCheckbox(elem.text, get_answer_by_id(elem.id), get_variants_by_id(elem.id), elem.id)
+            q = QuestionCheckbox(elem.text, get_answer_by_id(elem.id), get_variants_by_id(elem.id), elem.id, subject)
         if elem.question_type == "QuestionRadio":
-            q = classes.QuestionRadio(elem.text, get_answer_by_id(elem.id), get_variants_by_id(elem.id), elem.id)
+            q = QuestionRadio(elem.text, get_answer_by_id(elem.id), get_variants_by_id(elem.id), elem.id, subject)
         if elem.question_type == "QuestionText":
-            q = classes.QuestionText(elem.text, get_answer_by_id(elem.id), elem.answer_type, elem.id)
+            q = QuestionText(elem.text, get_answer_by_id(elem.id), elem.answer_type, elem.id, subject)
         questions_arr.append(q)
     return questions_arr
 
@@ -158,7 +157,7 @@ def get_answer_by_id(qid):
     return answers
 
 
-# Управление пользователями
+# Управление пользователями и их тестами
 
 def add_new_user(user_login, user_password):
     new_u = Users(user_login=user_login, user_password=generate_password_hash(user_password))
@@ -176,6 +175,48 @@ def check_user(user_login, user_password):
         return check_password_hash(this_user.first().user_password, user_password)
 
     return False
+
+
+def add_done_test(donetest):
+    donet = DoneTests(user_id=current_user.id, subject=donetest.subject)
+    db.session.add(donet)
+    db.session.commit()
+    for index in range(len(donetest.questions)):
+        done_q = DoneQuestions(question_id=donetest.questions[index].id, test_id=donet.id,
+                               result=donetest.get_rw()[index])
+        db.session.add(done_q)
+        db.session.commit()
+    return
+
+
+def get_tests_id_by_user_id(user_id):
+    return [elem.id for elem in DoneTests.query.filter(DoneTests.user_id == user_id)]
+
+
+def get_done_test_by_id(test_id):
+    subject = (DoneTests.query.filter(DoneTests.id == test_id).first()).subject
+    q_a = []
+    #print(DoneQuestions.query.filter(DoneQuestions.test_id == test_id).all())
+    for d_question in DoneQuestions.query.filter(DoneQuestions.test_id == test_id).all():
+        elem = Questions.query.filter(Questions.id == d_question.question_id).first()
+        if elem.question_type == "QuestionCheckbox":
+            q = QuestionCheckbox(elem.text, get_answer_by_id(elem.id), get_variants_by_id(elem.id), elem.id,
+                                 subject)
+        if elem.question_type == "QuestionRadio":
+            q = QuestionRadio(elem.text, get_answer_by_id(elem.id), get_variants_by_id(elem.id), elem.id, subject)
+        if elem.question_type == "QuestionText":
+            q = QuestionText(elem.text, get_answer_by_id(elem.id), elem.answer_type, elem.id, subject)
+        q_a.append(q)
+    dt = TestDone(q_a, subject, [])
+    return dt
+
+
+def get_test_result_by_id(test_id):
+    ans_arr = []
+    for d_question in DoneQuestions.query.filter(DoneQuestions.test_id == test_id):
+        ans_arr.append(d_question.result)
+
+    return ans_arr
 
 
 # Тело сайта
@@ -245,8 +286,11 @@ def add():
 @login_required
 def test_ch():
     if request.method == "POST":
-        print(str(request.form.get('subject')))
-        return redirect('/test/' + str(request.form.get('subject')) + '/' + str(request.form['q-num']))
+        sub = str(request.form.get('subject'))
+        if sub != 'all':
+            return redirect('/test/' + str(request.form.get('subject')) + '/' + str(request.form['q-num']))
+        else:
+            return redirect('/test/all')
     else:
         return render_template('test_ch.html', cur_user=current_user)
 
@@ -269,6 +313,8 @@ def test(subj, num):
         # print(cur_test)
         done_test = TestDone(cur_test.questions, cur_test.subject, ans_arr)
 
+        add_done_test(done_test)
+
         return render_template('test_res.html', ans_arr=done_test.userAnswers, q_arr=done_test.questions,
                                rw_arr=done_test.get_rw(), cur_user=current_user)
     else:
@@ -276,6 +322,40 @@ def test(subj, num):
 
         # new_test = classes.Test(get_questions_test_subject(subj), subj)
         new_test = Test(questions_r, subj)
+        cur_test = new_test
+        # print(cur_test)
+
+        return render_template("test.html", test_questions=new_test.questions, types_array=new_test.types_arr(),
+                               cur_user=current_user)
+
+
+@app.route('/test/all')
+@login_required
+def comp():
+    global cur_test
+    global done_test
+
+    if request.method == 'POST':
+        ans_arr = []
+        for i in range(10):
+            try:
+                if request.form['q' + str(i)]:
+                    ans_arr.append(request.form.getlist('q' + str(i)))
+            except:
+                pass
+        # print(ans_arr)
+        # print(cur_test)
+        done_test = TestDone(cur_test.questions, cur_test.subject, ans_arr)
+
+        return render_template('test_res.html', ans_arr=done_test.userAnswers, q_arr=done_test.questions,
+                               rw_arr=done_test.get_rw(), cur_user=current_user)
+    else:
+        questions_r = random.sample(
+            random.sample(get_questions_test_subject('rus'), 6) + random.sample(get_questions_test_subject('math'), 6),
+            12)
+
+        # new_test = classes.Test(get_questions_test_subject(subj), subj)
+        new_test = Test(questions_r, 'all')
         cur_test = new_test
         # print(cur_test)
 
@@ -291,6 +371,8 @@ def register():
 
         if n_login and n_pass:
             add_new_user(n_login, n_pass)
+            login_user(Users.query.filter(Users.user_login == n_login).first())
+            flash('You were successfully registered!', 'alert alert-success')
             return redirect('/')
 
     return render_template('register.html', cur_user=current_user)
@@ -315,10 +397,32 @@ def login():
     return render_template('login.html', cur_user=current_user)
 
 
+@app.route('/profile')
+@login_required
+def profile():
+    # print(get_tests_id_by_user_id(current_user.id))
+    return render_template('user_profile.html', cur_user=current_user)
+
+
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect('/')
+
+
+@app.route('/profile/tests')
+@login_required
+def pr_tests():
+    ut_id = get_tests_id_by_user_id(current_user.id)
+    return render_template('user_done_tests.html', cur_user=current_user, id_list=ut_id)
+
+
+@app.route('/profile/tests/<id>')
+@login_required
+def pr_test(id):
+    d_test = get_done_test_by_id(int(id))
+    return render_template('test_res.html', ans_arr=d_test.userAnswers, q_arr=d_test.questions,
+                           rw_arr=get_test_result_by_id(id), cur_user=current_user)
 
 
 @app.errorhandler(401)

@@ -40,10 +40,6 @@ class Users(db.Model):
     user_login = db.Column(db.String(100), nullable=False)
     user_password = db.Column(db.String(100), nullable=False)
 
-    def __init__(self, login, id):
-        self.user_login = login
-        self.id = str(id)
-
     def is_active(self):
         return True
 
@@ -55,3 +51,16 @@ class Users(db.Model):
 
     def get_id(self):
         return self.id
+
+
+class DoneQuestions(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    question_id = db.Column(db.Integer, nullable=False)
+    test_id = db.Column(db.Integer, nullable=False)
+    result = db.Column(db.Integer)
+
+
+class DoneTests(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    subject = db.Column(db.String(100), nullable=False)
