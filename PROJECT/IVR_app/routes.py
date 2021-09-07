@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash
+from flask import render_template, request, redirect, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import random
 from flask_login import login_user, login_required, logout_user, current_user
@@ -114,6 +114,7 @@ def get_questions_test_subject(subject):
     questions = Questions.query.filter(Questions.subject == subject)
     questions_arr = []
     for elem in questions:
+        q = []
         if elem.question_type == "QuestionCheckbox":
             q = QuestionCheckbox(elem.text, get_answer_by_id(elem.id), get_variants_by_id(elem.id), elem.id, subject)
         if elem.question_type == "QuestionRadio":
@@ -196,9 +197,10 @@ def get_tests_id_by_user_id(user_id):
 def get_done_test_by_id(test_id):
     subject = (DoneTests.query.filter(DoneTests.id == test_id).first()).subject
     q_a = []
-    #print(DoneQuestions.query.filter(DoneQuestions.test_id == test_id).all())
+    # print(DoneQuestions.query.filter(DoneQuestions.test_id == test_id).all())
     for d_question in DoneQuestions.query.filter(DoneQuestions.test_id == test_id).all():
         elem = Questions.query.filter(Questions.id == d_question.question_id).first()
+        q = []
         if elem.question_type == "QuestionCheckbox":
             q = QuestionCheckbox(elem.text, get_answer_by_id(elem.id), get_variants_by_id(elem.id), elem.id,
                                  subject)
@@ -227,6 +229,7 @@ def hello_world():
 
 @app.route('/chance', methods=['POST', 'GET'])
 def calc_chance():
+    print(UserChances.query.filter(UserChances.user_id == current_user.id).first()) #DEBUG
     if request.method == "POST":
         # to_bd_chance()
         # return render_template("chance_res.html", result=get_chance_result(), data=chance_list())

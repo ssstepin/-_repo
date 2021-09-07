@@ -64,3 +64,9 @@ class DoneTests(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
     subject = db.Column(db.String(100), nullable=False)
+
+
+class UserChances(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    chance = db.Column(db.Integer, nullable=False)
