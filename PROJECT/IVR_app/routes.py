@@ -280,8 +280,8 @@ def get_all_results_by_subj(subj):
 
 # Тело сайта
 @app.route('/')
-def hello_world():
-    return render_template('base.html', cur_user=current_user)
+def main():
+    return render_template('main.html', cur_user=current_user)
 
 
 @app.route('/chance', methods=['POST', 'GET'])
@@ -355,6 +355,10 @@ def add():
 @app.route('/test', methods=['POST', 'GET'])
 @login_required
 def test_ch():
+    if not current_user.done_first_test:
+        flash('Тест для определения начального уровня не пройден!', 'alert alert-danger')
+        return redirect('/profile')
+
     if request.method == "POST":
         sub = str(request.form.get('subject'))
         if sub != 'all':
@@ -375,6 +379,10 @@ def test(subj, num):
     global cur_test
     global done_test
     global start_time
+
+    if not current_user.done_first_test:
+        flash('Тест для определения начального уровня не пройден!', 'alert alert-danger')
+        return redirect('/profile')
 
     if request.method == 'POST':
         ans_arr = []
@@ -423,7 +431,7 @@ def test(subj, num):
                                    cur_user=current_user)
     else:
         questions_r = random.sample(get_questions_test_subject(subj), int(num))
-        #print(get_questions_test_subject("inf"))
+        # print(get_questions_test_subject("inf"))
 
         # new_test = classes.Test(get_questions_test_subject(subj), subj)
         new_test = Test(questions_r, subj)
@@ -440,6 +448,7 @@ def comp():
     global cur_test
     global done_test
     global start_time
+
 
     if request.method == 'POST':
         ans_arr = []
@@ -591,10 +600,14 @@ def logout():
 @app.route('/profile/tests')
 @login_required
 def pr_tests():
+    if not current_user.done_first_test:
+        flash('Тест для определения начального уровня не пройден!', 'alert alert-danger')
+        return redirect('/profile')
     ut_id = get_tests_id_by_user_id(current_user.id)
     return render_template('tests_all_results.html', cur_user=current_user,
                            r_rus=get_all_results_by_subj("rus"), rav_rus=get_av_result_by_subject_and_user_id("rus"),
-                           r_math=get_all_results_by_subj("math"), rav_math=get_av_result_by_subject_and_user_id("math"),
+                           r_math=get_all_results_by_subj("math"),
+                           rav_math=get_av_result_by_subject_and_user_id("math"),
                            r_inf=get_all_results_by_subj("inf"), rav_inf=get_av_result_by_subject_and_user_id("inf"),
                            r_all=get_all_results_by_subj("all"), rav_all=get_av_result_by_subject_and_user_id("all"))
 
@@ -602,6 +615,9 @@ def pr_tests():
 @app.route('/message/<q_id>', methods=['POST', 'GET'])
 @login_required
 def message(q_id):
+    if not current_user.done_first_test:
+        flash('Тест для определения начального уровня не пройден!', 'alert alert-danger')
+        return redirect('/profile')
     if request.method == 'POST':
         if request.form['message']:
             new_m = Messages(q_id=q_id, message=request.form['message'])

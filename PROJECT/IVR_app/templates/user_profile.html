@@ -8,33 +8,74 @@
     <h1 class="text-center">{{ cur_user.user_login }}</h1>
     <br>
     {% if not did_chance %}
-        <div class="row">
-            <h2 class="text-center">Форма для получения шанса на поступление не пройдена!</h2>
-            <a class="btn btn-danger mx-auto" href="/chance">Пройти</a>
+        {#        <div class="row">#}
+        {#            <h2 class="text-center">Форма для получения шанса на поступление не пройдена!</h2>#}
+        {#            <a class="btn btn-danger mx-auto" href="/chance">Пройти</a>#}
+        {#        </div>#}
+        <div class="card my-5" style="margin-left: 500px; margin-right: 500px">
+            <div class="card-header">
+                Шанс на поступление
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Форма не пройдена</h5>
+                <p class="card-text">Форма для получения шанса на поступление не пройдена!</p>
+                <a class="btn btn-danger" href="/chance">Пройти</a>
+            </div>
         </div>
         <br>
     {% else %}
-        <div class="row container mx-auto">
-            <h2 class="text-center">Форма для получения шанса на поступление пройдена!</h2>
-            <a class="btn btn-success" href="/chance">Шанс на поступление</a>
+{#        <div class="row container mx-auto">#}
+{#            <h2 class="text-center">Форма для получения шанса на поступление пройдена!</h2>#}
+{#            <a class="btn btn-success" href="/chance">Шанс на поступление</a>#}
+{#        </div>#}
+        <div class="card my-5" style="margin-left: 500px; margin-right: 500px">
+            <div class="card-header">
+                Шанс на поступление
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Форма пройдена</h5>
+                <p class="card-text">Форма для получения шанса на поступление пройдена!</p>
+                <a class="btn btn-primary" href="/chance">Шанс на поступление</a>
+            </div>
         </div>
     {% endif %}
     {% if not cur_user.done_first_test %}
-        <div class="container card">
-            <div class="card-body row">
-                <h2 class="card-title text-center">Пройдите тест для определения начального уровня</h2>
-                <a href="/test/all" class="btn btn-info mx-auto">Начать!</a>
+{#        <div class="container card">#}
+{#            <div class="card-body row">#}
+{#                <h2 class="card-title text-center">Пройдите тест для определения начального уровня</h2>#}
+{#                <a href="/test/all" class="btn btn-info mx-auto">Начать!</a>#}
+{#            </div>#}
+{#        </div>#}
+        <div class="card my-5" style="margin-left: 500px; margin-right: 500px">
+            <div class="card-header">
+                Шанс на поступление
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Начальный тест не пройден</h5>
+                <p class="card-text">Форма для получения шанса на поступление не пройдена!</p>
+                <a class="btn btn-danger" href="test/all">Начать!</a>
             </div>
         </div>
     {% else %}
-        <div class="container card">
-            <div class="card-body row">
-                <h2 class="card-title text-center">Тест для определения начального уровня пройден!</h2>
-                <p class="btn btn-info mx-auto">Отлично!</p>
+{#        <div class="container card">#}
+{#            <div class="card-body row">#}
+{#                <h2 class="card-title text-center">Тест для определения начального уровня пройден!</h2>#}
+{#                <p class="btn btn-info mx-auto">Отлично!</p>#}
+{#            </div>#}
+{#        </div>#}
+        <div class="card my-5" style="margin-left: 500px; margin-right: 500px">
+            <div class="card-header">
+                Шанс на поступление
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Начальный тест пройден</h5>
+                <p class="card-text">Форма для получения шанса на поступление пройдена!</p>
+                <a class="btn btn-primary disabled" href="test/all">Отлично!</a>
             </div>
         </div>
     {% endif %}
     {% if cur_user.done_first_test and did_chance %}
         <h2 class="text-center"><a href="profile/tests">Пройденные тесты</a></h2>
+        <h2 class="text-center"><a href="https://school.hse.ru/demoversion">Больше демоверсий - тут!</a></h2>
     {% endif %}
 {% endblock %}
