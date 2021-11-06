@@ -51,7 +51,7 @@ def find_same_answer():
             res[i] = "Да"
         else:
             res[i] = "Нет"
-    # print(res)
+
     for elem in answers:
         if elem.answer1 == res[0] and elem.answer2 == res[1] and elem.answer3 == res[2] and elem.answer4 == res[
             3] and elem.answer5 == res[4] and elem.answer6 == res[5] and elem.answer7 == res[6] and elem.answer8 == res[
@@ -70,9 +70,9 @@ def get_chance_result():
     all_res = [0] * len(get_questions_chance())
     answers = UserAnswers.query.filter(UserAnswers.id > 1).all()
     cnt = len(answers)
-    # print(answers)
+
     for elem in answers:
-        # print(elem)
+
         if elem.answer1 == 'Да':
             all_res[0] += 1
         if elem.answer2 == 'Да':
@@ -95,7 +95,7 @@ def get_chance_result():
             all_res[9] += 1
 
     sum_res = 0
-    # print(answers)
+
     for i in range(len(get_questions_chance())):
         sum_res += (all_res[i] * res[i] + (cnt - all_res[i]) * (1 - res[i]))
 
@@ -215,7 +215,6 @@ def get_tests_id_by_user_id(user_id):
 def get_done_test_by_id(test_id):
     subject = (DoneTests.query.filter(DoneTests.id == test_id).first()).subject
     q_a = []
-    # print(DoneQuestions.query.filter(DoneQuestions.test_id == test_id).all())
     for d_question in DoneQuestions.query.filter(DoneQuestions.test_id == test_id).all():
         elem = Questions.query.filter(Questions.id == d_question.question_id).first()
         q = []
@@ -287,7 +286,6 @@ def main():
 @app.route('/chance', methods=['POST', 'GET'])
 @login_required
 def calc_chance():
-    # print(UserChances.query.filter(UserChances.user_id == current_user.id).first()) #DEBUG
     global result, same
     if request.method == "POST":
         # to_bd_chance()
@@ -346,7 +344,6 @@ def add():
 
             q_v = [request.form.get("question-variant" + str(i + 1)) for i in range(3)]
 
-            print(q_d)
             add_question(q_d, q_a, q_v)
 
     return render_template("addq.html", cur_user=current_user)
@@ -390,10 +387,11 @@ def test(subj, num):
             try:
                 if request.form['q' + str(i)]:
                     ans_arr.append(request.form.getlist('q' + str(i)))
+                else:
+                    ans_arr.append([])
             except:
-                pass
-        # print(ans_arr)
-        # print(cur_test)
+                ans_arr.append([])
+
         done_test = TestDone(cur_test.questions, cur_test.subject, ans_arr)
         last_done_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, done_test.subject)
 
@@ -413,8 +411,6 @@ def test(subj, num):
                 res = get_test_result_by_id(d_test)
                 if len(res):
                     last_results.append(math.floor(100 * sum(res) / len(res)))
-
-            # print(last_results)
 
             av_res = math.floor(sum(last_results) / len(last_results))
 
@@ -431,12 +427,11 @@ def test(subj, num):
                                    cur_user=current_user)
     else:
         questions_r = random.sample(get_questions_test_subject(subj), int(num))
-        # print(get_questions_test_subject("inf"))
 
         # new_test = classes.Test(get_questions_test_subject(subj), subj)
         new_test = Test(questions_r, subj)
         cur_test = new_test
-        # print(cur_test)
+
         start_time = datetime.datetime.now()
         return render_template("test.html", test_questions=new_test.questions, types_array=new_test.types_arr(),
                                cur_user=current_user, subj=subj, num=num)
@@ -449,20 +444,19 @@ def comp():
     global done_test
     global start_time
 
-
     if request.method == 'POST':
         ans_arr = []
         for i in range(12):
             try:
                 if request.form['q' + str(i)]:
                     ans_arr.append(request.form.getlist('q' + str(i)))
+                else:
+                    ans_arr.append([])
             except:
                 pass
-        # print(ans_arr)
-        # print(cur_test)
+
         current_user.done_first_test = 1
         db.session.commit()
-        print(current_user.done_first_test)
 
         done_test = TestDone(cur_test.questions, cur_test.subject, ans_arr)
         last_done_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, done_test.subject)
@@ -483,8 +477,6 @@ def comp():
                 res = get_test_result_by_id(d_test)
                 if len(res):
                     last_results.append(math.floor(100 * sum(res) / len(res)))
-
-            # print(last_results)
 
             av_res = math.floor(sum(last_results) / len(last_results))
 
@@ -569,7 +561,6 @@ def login():
 @app.route('/profile')
 @login_required
 def profile():
-    # print(get_tests_id_by_user_id(current_user.id))
     if current_user.new_u:
         return redirect('/new_user')
     return render_template('user_profile.html', cur_user=current_user, did_chance=get_user_chance(current_user.id))

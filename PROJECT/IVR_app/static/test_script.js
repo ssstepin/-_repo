@@ -13,7 +13,7 @@ for (let i = 0; i < q_n; ++i) {
     if (i !== 0) q_arr[i].q_obj.style.display = 'none';
 }
 
-console.log(q_arr);
+//console.log(q_arr);
 
 q_arr.forEach(function (item, i, q_arr) {
     //console.log(item);
