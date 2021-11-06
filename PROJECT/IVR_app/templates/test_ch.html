@@ -21,7 +21,12 @@
                 <span>3</span><input type="range" class="form-range" name="q-num" max="10" min="3" step="1"><span
                     style="float: right">10</span>
             </div>
-            <div>
+            <div class="container">
+                <h2>Средние результаты по предметам:</h2>
+                <h3>Русский: {{ r_rus }}% {% if r_rus < 50 %} (стоит больше решать тесты данного типа) {% endif %}</h3>
+                <h3>Математика: {{ r_math }}% {% if r_math < 50 %} (стоит больше решать тесты данного типа) {% endif %}</h3>
+                <h3>Информатика: {{ r_inf }}% {% if r_inf < 50 %} (стоит больше решать тесты данного типа) {% endif %}</h3>
+                <h3>Комплексный тест: {{ r_all }}% {% if r_all < 50 %} (стоит больше решать тесты данного типа) {% endif %}</h3>
                 <input type="submit" class="btn btn-success" value="Начать">
             </div>
         </form>

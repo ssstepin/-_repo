@@ -11,5 +11,13 @@
         <p>Ваш результат {{ result }}</p>
         <p>Так же ответили: {{ same }}</p>
     </div>
+    {% if done_first_test != 1 %}
+    <div class="container card">
+        <div class="card-body row">
+            <h2 class="card-title text-center">Пройдите тест для определения начального уровня</h2>
+            <a href="/test/all" class="btn btn-info mx-auto">Начать!</a>
+        </div>
+    </div>
     <br>
+    {% endif %}
 {% endblock %}

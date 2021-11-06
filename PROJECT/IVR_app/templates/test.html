@@ -7,10 +7,28 @@
 
 {% block body %}
     <div class="container">
-        <form method="post" action="">
+        <div class="row">
+            <h2 id="t_sub">
+                {% if subj == "math" %}
+                    Математика
+                {% endif %}
+                {% if subj == "rus" %}
+                    Русский
+                {% endif %}
+                {% if subj == "inf" %}
+                    Информатика
+                {% endif %}
+                {% if subj == "comp" %}
+                    Комплексный тест
+                {% endif %}
+            </h2>
+            <h3 id="q_num">Количество вопросов: {{ num }}</h3>
+        </div>
+        <form method="post" action="" name="test">
             {% for index in range(test_questions|length) %}
-                <div class = "card" style="margin: 5rem auto 5rem">
-                    <h1 class="card-header text-center">{{ test_questions[index].questionText }}</h1>
+                <div class="card" style="margin: 5rem auto 5rem" id="{{ "q" + index|string }}">
+{#                    <h1 class="card-header text-center">{{ test_questions[index].questionText }}</h1>#}
+                    <img src="../../static/test_data/{{ test_questions[index].questionText }}">
                     {% if types_array[index]== "QuestionRadio" %}
                         <div class="card-body p-5">
                             {% for variant in test_questions[index].questionAnswerVariants %}
@@ -42,12 +60,19 @@
                                     <input type="text" name="{{ "q" + index|string }}">
                                 </div>
                             {% endif %}
+                            {% if test_questions[index].questionAnswerType == "int" %}
+                                <div>
+                                    <input type="number" name="{{ "q" + index|string }}">
+                                </div>
+                            {% endif %}
                         </div>
                     {% endif %}
+                    <button type="button" class="btn btn-success" name="{{ "btnq" + index|string }}">Ответить</button>
                 </div>
             {% endfor %}
             {#            {{ test_questions.0.questionText }}#}
-            <input type="submit" class="btn btn-success">
+            <input type="submit" class="btn btn-success" value="Завершить">
         </form>
     </div>
+    <script src="../../static/test_script.js"></script>
 {% endblock %}

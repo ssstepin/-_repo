@@ -7,7 +7,34 @@
 {% block body %}
     <h1 class="text-center">{{ cur_user.user_login }}</h1>
     <br>
-    <h2 class="text-center"><a href="profile/tests">Пройденные тесты</a></h2>
-    <br>
-    <h2 class="text-center"><a href="profile/chance">Шанс на поступление</a></h2>
+    {% if not did_chance %}
+        <div class="row">
+            <h2 class="text-center">Форма для получения шанса на поступление не пройдена!</h2>
+            <a class="btn btn-danger mx-auto" href="/chance">Пройти</a>
+        </div>
+        <br>
+    {% else %}
+        <div class="row container mx-auto">
+            <h2 class="text-center">Форма для получения шанса на поступление пройдена!</h2>
+            <a class="btn btn-success" href="/chance">Шанс на поступление</a>
+        </div>
+    {% endif %}
+    {% if not cur_user.done_first_test %}
+        <div class="container card">
+            <div class="card-body row">
+                <h2 class="card-title text-center">Пройдите тест для определения начального уровня</h2>
+                <a href="/test/all" class="btn btn-info mx-auto">Начать!</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="container card">
+            <div class="card-body row">
+                <h2 class="card-title text-center">Тест для определения начального уровня пройден!</h2>
+                <p class="btn btn-info mx-auto">Отлично!</p>
+            </div>
+        </div>
+    {% endif %}
+    {% if cur_user.done_first_test and did_chance %}
+        <h2 class="text-center"><a href="profile/tests">Пройденные тесты</a></h2>
+    {% endif %}
 {% endblock %}

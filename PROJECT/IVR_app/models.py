@@ -39,6 +39,8 @@ class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_login = db.Column(db.String(100), nullable=False)
     user_password = db.Column(db.String(100), nullable=False)
+    new_u = db.Column(db.Integer)
+    done_first_test = db.Column(db.Integer)
 
     def is_active(self):
         return True
@@ -66,7 +68,14 @@ class DoneTests(db.Model):
     subject = db.Column(db.String(100), nullable=False)
 
 
-class UserChances(db.Model):
+class UserChance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
     chance = db.Column(db.Integer, nullable=False)
+    same = db.Column(db.Integer)
+
+
+class Messages(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    q_id = db.Column(db.Integer, nullable=False)
+    message = db.Column(db.String)

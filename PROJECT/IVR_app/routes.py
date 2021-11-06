@@ -1,13 +1,17 @@
 from flask import render_template, request, redirect, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import random
+import datetime
+import math
 from flask_login import login_user, login_required, logout_user, current_user
 
 from .models import *
 from .classes import *
 
-result = cl = same = 0
-done_test = cur_test = []  # done_test - classes.TestDone; cur_test - classes.Test
+result = same = 0
+cur_test = []
+done_test = []  # done_test - classes.TestDone; cur_test - classes.Test
+start_time = 0
 
 
 # Функции для формы с шансом
@@ -161,21 +165,35 @@ def get_answer_by_id(qid):
 # Управление пользователями и их тестами
 
 def add_new_user(user_login, user_password):
-    new_u = Users(user_login=user_login, user_password=generate_password_hash(user_password))
+    new_u = Users(user_login=user_login, user_password=generate_password_hash(user_password), new_u=1)
     db.session.add(new_u)
     db.session.commit()
 
 
-def check_user(user_login, user_password):
-    this_user = Users.query.filter(Users.user_login == user_login)
+def check_login_pass(u_login, u_password):
+    this_user = Users.query.filter(Users.user_login == u_login)
     arr = []
     for elem in this_user:
         arr.append(elem)
 
     if len(arr) > 0:
-        return check_password_hash(this_user.first().user_password, user_password)
+        return "same_user"
+    else:
+        if len(u_password) < 8 or len(u_password) > 32:
+            return "wrong_pass_format"
+        for symbol in u_password:
+            if not (symbol.isalpha() or symbol.isdigit()):
+                return "wrong_pass_format"
+        return "success"
 
-    return False
+
+def check_user(user_login, user_password):
+    this_user = Users.query.filter(Users.user_login == user_login).first()
+
+    if not this_user:
+        return "no_such_user"
+
+    return check_password_hash(this_user.user_password, user_password)
 
 
 def add_done_test(donetest):
@@ -221,6 +239,45 @@ def get_test_result_by_id(test_id):
     return ans_arr
 
 
+def add_user_chance(user_id, chance, same_ch):
+    new_obj = UserChance(user_id=user_id, chance=chance, same=same_ch)
+    db.session.add(new_obj)
+    db.session.commit()
+
+
+def get_user_chance(user_id):
+    try:
+        res = UserChance.query.filter(UserChance.user_id == user_id).first()
+        return res.chance, res.same  # Кортеж
+    except:
+        return False
+
+
+def get_tests_id_by_user_id_and_subject(user_id, subj):
+    return [elem.id for elem in DoneTests.query.filter(DoneTests.user_id == user_id, DoneTests.subject == subj)]
+
+
+def get_av_result_by_subject_and_user_id(subj):
+    last_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, subj)
+    last_results = []
+    for d_test in last_tests_id:
+        res = get_test_result_by_id(d_test)
+        if len(res):
+            last_results.append(math.floor(100 * sum(res) / len(res)))
+    return math.floor(sum(last_results) / (len(last_results) + int(len(last_results) == 0)))
+
+
+def get_all_results_by_subj(subj):
+    last_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, subj)
+    last_results = []
+    for d_test in last_tests_id:
+        res = get_test_result_by_id(d_test)
+        if len(res):
+            last_results.append(math.floor(100 * sum(res) / len(res)))
+
+    return last_results
+
+
 # Тело сайта
 @app.route('/')
 def hello_world():
@@ -228,24 +285,34 @@ def hello_world():
 
 
 @app.route('/chance', methods=['POST', 'GET'])
+@login_required
 def calc_chance():
-    print(UserChances.query.filter(UserChances.user_id == current_user.id).first()) #DEBUG
+    # print(UserChances.query.filter(UserChances.user_id == current_user.id).first()) #DEBUG
+    global result, same
     if request.method == "POST":
         # to_bd_chance()
         # return render_template("chance_res.html", result=get_chance_result(), data=chance_list())
-        global result, cl, same
         result = get_chance_result()
         same = find_same_answer()
-        cl = chance_list()
+        if current_user.is_authenticated:
+            add_user_chance(current_user.id, result, same)
         return redirect('/chance/result')
     else:
+        if current_user.is_authenticated:
+            cur_user_ch = get_user_chance(current_user.id)
+            if cur_user_ch:
+                result = cur_user_ch[0]
+                same = cur_user_ch[1]
+                return redirect('/chance/result')
         return render_template("chance.html", questions=get_questions_chance(), cur_user=current_user)
 
 
 @app.route('/chance/result')
+@login_required
 def show_res():
     # to_bd_chance()
-    return render_template("chance_res.html", result=result, same=same, cur_user=current_user)
+    return render_template("chance_res.html", result=result, same=same, cur_user=current_user,
+                           done_first_test=current_user.done_first_test)
     # return "Hello"
 
 
@@ -295,7 +362,11 @@ def test_ch():
         else:
             return redirect('/test/all')
     else:
-        return render_template('test_ch.html', cur_user=current_user)
+        return render_template('test_ch.html', cur_user=current_user,
+                               r_rus=get_av_result_by_subject_and_user_id("rus"),
+                               r_math=get_av_result_by_subject_and_user_id("math"),
+                               r_inf=get_av_result_by_subject_and_user_id("inf"),
+                               r_all=get_av_result_by_subject_and_user_id("all"))
 
 
 @app.route('/test/<subj>/<num>', methods=['POST', 'GET'])
@@ -303,6 +374,7 @@ def test_ch():
 def test(subj, num):
     global cur_test
     global done_test
+    global start_time
 
     if request.method == 'POST':
         ans_arr = []
@@ -315,32 +387,63 @@ def test(subj, num):
         # print(ans_arr)
         # print(cur_test)
         done_test = TestDone(cur_test.questions, cur_test.subject, ans_arr)
+        last_done_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, done_test.subject)
 
-        add_done_test(done_test)
+        if len(done_test.questions):
+            add_done_test(done_test)
+        test_time = math.floor(datetime.datetime.now().timestamp() - start_time.timestamp())
 
-        return render_template('test_res.html', ans_arr=done_test.userAnswers, q_arr=done_test.questions,
-                               rw_arr=done_test.get_rw(), cur_user=current_user)
+        if len(last_done_tests_id) != 0:
+            last_done_test_id = last_done_tests_id[-1]
+            last_done_test = get_done_test_by_id(last_done_test_id)
+            last_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, done_test.subject)
+            last_tests = [get_done_test_by_id(t_id) for t_id in last_tests_id]
+
+            # last_results = [math.floor(sum(d_test.get_rw()) / len(d_test.get_rw())) for d_test in last_tests]
+            last_results = []
+            for d_test in last_tests_id:
+                res = get_test_result_by_id(d_test)
+                if len(res):
+                    last_results.append(math.floor(100 * sum(res) / len(res)))
+
+            # print(last_results)
+
+            av_res = math.floor(sum(last_results) / len(last_results))
+
+            return render_template('test_res.html', ans_arr=done_test.userAnswers, q_arr=done_test.questions,
+                                   rw_arr=done_test.get_rw(), rw_arr_res=sum(done_test.get_rw()),
+                                   last_test_rw_arr=get_test_result_by_id(last_done_test_id),
+                                   last_test_rw_arr_res=sum(get_test_result_by_id(last_done_test_id)), lt=True,
+                                   t_time=test_time, l_reults=last_results, avres=av_res,
+                                   cur_user=current_user)
+        else:
+            return render_template('test_res.html', ans_arr=done_test.userAnswers, q_arr=done_test.questions,
+                                   rw_arr=done_test.get_rw(), rw_arr_res=sum(done_test.get_rw()), lt=False,
+                                   t_time=test_time,
+                                   cur_user=current_user)
     else:
         questions_r = random.sample(get_questions_test_subject(subj), int(num))
+        #print(get_questions_test_subject("inf"))
 
         # new_test = classes.Test(get_questions_test_subject(subj), subj)
         new_test = Test(questions_r, subj)
         cur_test = new_test
         # print(cur_test)
-
+        start_time = datetime.datetime.now()
         return render_template("test.html", test_questions=new_test.questions, types_array=new_test.types_arr(),
-                               cur_user=current_user)
+                               cur_user=current_user, subj=subj, num=num)
 
 
-@app.route('/test/all')
+@app.route('/test/all', methods=['POST', 'GET'])
 @login_required
 def comp():
     global cur_test
     global done_test
+    global start_time
 
     if request.method == 'POST':
         ans_arr = []
-        for i in range(10):
+        for i in range(12):
             try:
                 if request.form['q' + str(i)]:
                     ans_arr.append(request.form.getlist('q' + str(i)))
@@ -348,10 +451,45 @@ def comp():
                 pass
         # print(ans_arr)
         # print(cur_test)
-        done_test = TestDone(cur_test.questions, cur_test.subject, ans_arr)
+        current_user.done_first_test = 1
+        db.session.commit()
+        print(current_user.done_first_test)
 
-        return render_template('test_res.html', ans_arr=done_test.userAnswers, q_arr=done_test.questions,
-                               rw_arr=done_test.get_rw(), cur_user=current_user)
+        done_test = TestDone(cur_test.questions, cur_test.subject, ans_arr)
+        last_done_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, done_test.subject)
+
+        if len(done_test.questions):
+            add_done_test(done_test)
+        test_time = math.floor(datetime.datetime.now().timestamp() - start_time.timestamp())
+
+        if len(last_done_tests_id) != 0:
+            last_done_test_id = last_done_tests_id[-1]
+            last_done_test = get_done_test_by_id(last_done_test_id)
+            last_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, done_test.subject)
+            last_tests = [get_done_test_by_id(t_id) for t_id in last_tests_id]
+
+            # last_results = [math.floor(sum(d_test.get_rw()) / len(d_test.get_rw())) for d_test in last_tests]
+            last_results = []
+            for d_test in last_tests_id:
+                res = get_test_result_by_id(d_test)
+                if len(res):
+                    last_results.append(math.floor(100 * sum(res) / len(res)))
+
+            # print(last_results)
+
+            av_res = math.floor(sum(last_results) / len(last_results))
+
+            return render_template('test_res.html', ans_arr=done_test.userAnswers, q_arr=done_test.questions,
+                                   rw_arr=done_test.get_rw(), rw_arr_res=sum(done_test.get_rw()),
+                                   last_test_rw_arr=get_test_result_by_id(last_done_test_id),
+                                   last_test_rw_arr_res=sum(get_test_result_by_id(last_done_test_id)), lt=True,
+                                   t_time=test_time, l_reults=last_results, avres=av_res,
+                                   cur_user=current_user)
+        else:
+            return render_template('test_res.html', ans_arr=done_test.userAnswers, q_arr=done_test.questions,
+                                   rw_arr=done_test.get_rw(), rw_arr_res=sum(done_test.get_rw()), lt=False,
+                                   t_time=test_time,
+                                   cur_user=current_user)
     else:
         questions_r = random.sample(
             random.sample(get_questions_test_subject('rus'), 6) + random.sample(get_questions_test_subject('math'), 6),
@@ -360,10 +498,10 @@ def comp():
         # new_test = classes.Test(get_questions_test_subject(subj), subj)
         new_test = Test(questions_r, 'all')
         cur_test = new_test
-        # print(cur_test)
+        start_time = datetime.datetime.now()
 
         return render_template("test.html", test_questions=new_test.questions, types_array=new_test.types_arr(),
-                               cur_user=current_user)
+                               cur_user=current_user, subj="comp", num="12")
 
 
 @app.route('/register', methods=['POST', 'GET'])
@@ -371,12 +509,25 @@ def register():
     if request.method == 'POST':
         n_login = request.form.get('login')
         n_pass = request.form.get('password')
+        n_pass2 = request.form.get('s_password')
 
         if n_login and n_pass:
-            add_new_user(n_login, n_pass)
-            login_user(Users.query.filter(Users.user_login == n_login).first())
-            flash('You were successfully registered!', 'alert alert-success')
-            return redirect('/')
+            res = check_login_pass(n_login, n_pass)
+            if res == "same_user":
+                flash('This user already exists', 'alert alert-danger')
+                return redirect('/register')
+            if res == "wrong_pass_format":
+                flash('Wrong password format. 8 to 30 symbols, should contain only letters and digits',
+                      'alert alert-danger')
+                return redirect('/register')
+            if n_pass2 != n_pass:
+                flash('Passwords are not equal', 'alert alert-warning')
+                return redirect('/register')
+            if res == "success":
+                add_new_user(n_login, n_pass)
+                # login_user(Users.query.filter(Users.user_login == n_login).first())
+                flash('You were successfully registered!', 'alert alert-success')
+                return redirect('/login')
 
     return render_template('register.html', cur_user=current_user)
 
@@ -387,15 +538,21 @@ def login():
         u_login = request.form.get('login')
         u_pass = request.form.get('password')
 
+        if not u_login:
+            flash('Please enter your login', 'alert alert-warning')
+
+        if u_login and not u_pass:
+            flash('Please enter password', 'alert alert-warning')
         if u_login and u_pass:
             if check_user(u_login, u_pass):
-                cur_user = Users.query.filter(Users.user_login == u_login).first()
-                login_user(cur_user)
-                flash('You were successfully logged in!', 'alert alert-success')
-                return redirect('/')
+                if check_user(u_login, u_pass) == "no_such_user":
+                    flash("No such user", 'alert alert-danger')
+                else:
+                    login_user(Users.query.filter(Users.user_login == u_login).first())
+                    flash('You were successfully logged in!', 'alert alert-success')
+                    return redirect('/profile')
             else:
-                flash('You shall not pass!', 'alert alert-danger')
-                return render_template('login.html', cur_user=current_user)
+                flash("Wrong password", 'alert alert-danger')
 
     return render_template('login.html', cur_user=current_user)
 
@@ -404,7 +561,25 @@ def login():
 @login_required
 def profile():
     # print(get_tests_id_by_user_id(current_user.id))
-    return render_template('user_profile.html', cur_user=current_user)
+    if current_user.new_u:
+        return redirect('/new_user')
+    return render_template('user_profile.html', cur_user=current_user, did_chance=get_user_chance(current_user.id))
+
+
+@app.route('/new_user')
+@login_required
+def new_user():
+    if not current_user.new_u:
+        return redirect('/profile')
+    return render_template('new_user.html', cur_user=current_user)
+
+
+@app.route('/greet')
+@login_required
+def greet_close():
+    current_user.new_u = 0
+    db.session.commit()
+    return redirect('new_user')
 
 
 @app.route('/logout')
@@ -417,15 +592,24 @@ def logout():
 @login_required
 def pr_tests():
     ut_id = get_tests_id_by_user_id(current_user.id)
-    return render_template('user_done_tests.html', cur_user=current_user, id_list=ut_id)
+    return render_template('tests_all_results.html', cur_user=current_user,
+                           r_rus=get_all_results_by_subj("rus"), rav_rus=get_av_result_by_subject_and_user_id("rus"),
+                           r_math=get_all_results_by_subj("math"), rav_math=get_av_result_by_subject_and_user_id("math"),
+                           r_inf=get_all_results_by_subj("inf"), rav_inf=get_av_result_by_subject_and_user_id("inf"),
+                           r_all=get_all_results_by_subj("all"), rav_all=get_av_result_by_subject_and_user_id("all"))
 
 
-@app.route('/profile/tests/<id>')
+@app.route('/message/<q_id>', methods=['POST', 'GET'])
 @login_required
-def pr_test(id):
-    d_test = get_done_test_by_id(int(id))
-    return render_template('test_res.html', ans_arr=d_test.userAnswers, q_arr=d_test.questions,
-                           rw_arr=get_test_result_by_id(id), cur_user=current_user)
+def message(q_id):
+    if request.method == 'POST':
+        if request.form['message']:
+            new_m = Messages(q_id=q_id, message=request.form['message'])
+            db.session.add(new_m)
+            db.session.commit()
+            flash('Спасибо за сообщение!', 'alert alert-success')
+            return redirect('/')
+    return render_template('message.html', cur_user=current_user)
 
 
 @app.errorhandler(401)

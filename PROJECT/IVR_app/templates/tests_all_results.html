@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Результаты тестирований
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1 class="text-center">Результаты тестов</h1>
+        <h2 class="text-center">Русский</h2>
+        {% if r_rus|length %}
+            <div id="curve_rus"></div>{% endif %}
+        <h2 class="text-center">Средний результат: {{ rav_rus }}%</h2>
+        <br>
+        <h2 class="text-center">Математика</h2>
+        {% if r_math|length %}
+            <div id="curve_math"></div>{% endif %}
+        <h2 class="text-center">Средний результат: {{ rav_math }}%</h2>
+        <br>
+        <h2 class="text-center">Информатика</h2>
+        {% if r_inf|length %}
+            <div id="curve_inf"></div>{% endif %}
+        <h2 class="text-center">Средний результат: {{ rav_inf }}%</h2>
+        <br>
+        <h2 class="text-center">Комплексные тесты</h2>
+        {% if r_all|length %}
+            <div id="curve_all"></div>{% endif %}
+        <h2 class="text-center">Средний результат: {{ rav_all }}%</h2>
+    </div>
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages': ['corechart']});
+        google.charts.setOnLoadCallback(drawChart_rus);
+        google.charts.setOnLoadCallback(drawChart_math);
+        google.charts.setOnLoadCallback(drawChart_inf);
+        google.charts.setOnLoadCallback(drawChart_all);
+
+        function drawChart_rus() {
+            var data = google.visualization.arrayToDataTable([
+                ['Тесты', 'Результаты']
+                {% for index in range(r_rus|length) %}
+                    ,['{{ (index + 1)|string }}', {{ r_rus[index] }}]
+                {% endfor %}
+            ]);
+
+            var options = {
+                title: 'Русский:',
+                curveType: 'function',
+                legend: {position: 'bottom'}
+            };
+
+            var chart = new google.visualization.LineChart(document.getElementById('curve_rus'));
+
+            chart.draw(data, options);
+        }
+
+        function drawChart_math() {
+            var data = google.visualization.arrayToDataTable([
+                ['Тесты', 'Результаты']
+                {% for index in range(r_math|length) %}
+                    ,['{{(index + 1)|string }}', {{ r_math[index] }}]
+                {% endfor %}
+            ]);
+
+            var options = {
+                title: 'Математика:',
+                curveType: 'function',
+                legend: {position: 'bottom'}
+            };
+
+            var chart = new google.visualization.LineChart(document.getElementById('curve_math'));
+
+            chart.draw(data, options);
+        }
+
+        function drawChart_inf() {
+            var data = google.visualization.arrayToDataTable([
+                ['Тесты', 'Результаты']
+                {% for index in range(r_inf|length) %}
+                    ,['{{ (index + 1)|string }}', {{ r_inf[index] }}]
+                {% endfor %}
+            ]);
+
+            var options = {
+                title: 'Информатика:',
+                curveType: 'function',
+                legend: {position: 'bottom'}
+            };
+
+            var chart = new google.visualization.LineChart(document.getElementById('curve_inf'));
+
+            chart.draw(data, options);
+        }
+
+        function drawChart_all() {
+            var data = google.visualization.arrayToDataTable([
+                ['Тесты', 'Результаты']
+                {% for index in range(r_all|length) %}
+                    ,['{{ (index + 1)|string }}', {{ r_all[index] }}]
+                {% endfor %}
+            ]);
+
+            var options = {
+                title: 'Комплексный:',
+                curveType: 'function',
+                legend: {position: 'bottom'}
+            };
+
+            var chart = new google.visualization.LineChart(document.getElementById('curve_all'));
+
+            chart.draw(data, options);
+        }
+    </script>
+{% endblock %}

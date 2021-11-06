@@ -8,12 +8,19 @@
 {% block body %}
     <form method="post" class="container">
         {% for question in questions %}
-            <div class="container">
-                <span>Вопрос {{ question.0 }}</span><br>
-                <label><input type="radio" name="{{ "q" + question.1|string }}" value="Да"> Да</label>
-                <label><input type="radio" name="{{ "q" + question.1|string }}" value="Нет"> Нет</label>
+            <div class="card p-3 m-3">
+                <!-- <span>Вопрос {{ question.0 }}</span><br> -->
+                <div class="card-body">
+                    <h5 class="card-title">Вопрос {{ question.1 }}</h5>
+                    <h6 class="card-subtitle mb-2">{{ question.0 }}</h6>
+                    <label><input type="radio" name="{{ "q" + question.1|string }}" value="Да"> Да</label>
+                    <label><input type="radio" name="{{ "q" + question.1|string }}" value="Нет"> Нет</label>
+                </div>
             </div>
         {% endfor %}
-        <input type="submit" class="btn btn-success">
+        <div class="mx-auto d-flex justify-content-center">
+            <input type="submit" class="btn btn-success" value="Готово" disabled id="subm">
+        </div>
     </form>
+    <script src="static/chance_script.js"></script>
 {% endblock %}

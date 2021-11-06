@@ -9,14 +9,58 @@
     <div class="container">
     {% for i in range(q_arr|length) %}
         {% if rw_arr[i] %}
-            <div class="alert alert-success">
+            <div class="alert alert-success" id="{{ q_arr[i].id|string }}">
         {% else %}
-            <div class="alert alert-danger">
+            <div class="alert alert-danger" id="{{ q_arr[i].id|string }}">
         {% endif %}
-    <h2>{{ q_arr[i].questionText }}</h2>
+    {#    <h2>{{ q_arr[i].questionText }}</h2>#}
+    <img class="img-fluid" src="../../static/test_data/{{ q_arr[i].questionText }}">
     <h3>Правильный ответ: {% for ans in q_arr[i].questionAnswer %} {{ ans }} {% endfor %} </h3>
+    <h3>Ваш ответ: {% for ans in ans_arr[i] %} {{ ans }} {% endfor %}</h3>
+    <a class="btn btn-success" href="/message/{{ q_arr[i].id|string }}">Вопросы?</a>
     </div>
     {% endfor %}
+
+<h3>{{ rw_arr_res|string + " из " + rw_arr|length|string }}</h3>
+<h3>{{ (rw_arr_res*100 / rw_arr|length)|int|string + '%' }}</h3>
+
+<h3>Затраченное время: {{ t_time }} с</h3>
+{% if lt %}
+    <h3>Прошлый тест: {{ last_test_rw_arr_res|string + " из " + last_test_rw_arr|length|string }}</h3>
+    <h3>{{ (last_test_rw_arr_res*100 / last_test_rw_arr|length)|int|string + '%' }}</h3>
+    <div id="curve_chart" style="width: auto; height: 500px"></div>
+    <h3>Средний результат: {{ avres }}%</h3>
+{% else %}
+    <h3>Тесты такого типа еще не были пройдены</h3>
+{% endif %}
+<a class="btn btn-success" href="/profile">В личный кабинет</a>
+
+
 </div>
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages': ['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable([
+                ['Тест', 'Результат']
+                {% for index in range(l_reults|length) %}
+                    ,['{{ (index + 1)|string }}', {{ l_reults[index] }}]
+                {% endfor %}
+            ]);
+
+            var options = {
+                title: 'Все тесты данного типа:',
+                curveType: 'function',
+                legend: {position: 'bottom'}
+            };
+
+            var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+            chart.draw(data, options);
+        }
+    </script>
 {% endblock %}
 

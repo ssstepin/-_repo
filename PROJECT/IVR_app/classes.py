@@ -17,7 +17,7 @@ class Question(object):
         for ans in self.questionAnswer:
             right_answer.append(ans.lower())
         user_answers = []
-        for ans in user_answer:
+        for ans in set(user_answer):
             user_answers.append(ans.lower())
         return sorted(right_answer) == sorted(user_answers)
 
@@ -25,7 +25,7 @@ class Question(object):
 class QuestionCheckbox(Question):
     def __init__(self, text: str, answer: list, variants: list, q_id: int, subject: str):
         super(QuestionCheckbox, self).__init__(text, answer, q_id, subject)
-        variants_plus = variants + list(answer)
+        variants_plus = variants
         self.questionAnswerVariants = variants_plus
 
     def debug_print(self):
@@ -39,7 +39,7 @@ class QuestionCheckbox(Question):
 class QuestionRadio(Question):
     def __init__(self, text: str, answer: list, variants: list, q_id: int, subject: str):
         super(QuestionRadio, self).__init__(text, answer, q_id, subject)
-        variants_plus = variants + list(answer)
+        variants_plus = variants
         self.questionAnswerVariants = variants_plus
 
     def debug_print(self):

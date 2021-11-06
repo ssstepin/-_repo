@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Привет!
+{% endblock %}
+
+{% block body %}
+    <h1 class="text-center m-5">Привет, {{ cur_user.user_login }}!</h1>
+    <div class="text-center">
+    <img src="../static/234-2349016_transparent-emotes-hug-jazz-hands-emoji-png.png" class="" width="25%" height="25%">
+        </div>
+    <div class="mx-auto d-flex justify-content-center">
+        <a class="btn btn-success" href="/greet">К тестам!</a>
+    </div>
+{% endblock %}
