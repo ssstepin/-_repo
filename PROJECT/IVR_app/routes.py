@@ -15,7 +15,7 @@ start_time = 0
 
 
 # Функции для формы с шансом
-def get_questions_chance():
+def get_questions_chance():  # Получить все вопросы для определения шанса поступления
     questions = UserAnswers.query.filter(UserAnswers.id == 1)
     arr = []
     for elem in questions:
@@ -32,7 +32,7 @@ def get_questions_chance():
     return arr
 
 
-def get_answer():
+def get_answer():  # Получить ответы на форму с вопросами для вычисления шанса поступления
     res = []
     for i in range(len(get_questions_chance())):
         if request.form['q' + str(i + 1)] == 'Да':
@@ -42,7 +42,7 @@ def get_answer():
     return res
 
 
-def find_same_answer():
+def find_same_answer():  # Найти количество людей, так же ответивших на вопросы в форме
     res = get_answer()
     answers = UserAnswers.query.filter(UserAnswers.id > 1).all()
     cnt = 0
@@ -60,12 +60,7 @@ def find_same_answer():
     return cnt
 
 
-def get_chance_result():
-    # res = 0
-    # for i in range(len(get_questions_chance())):
-    #   if request.form['q' + str(i + 1)] == 'Да':
-    #      res += 1
-    # return res
+def get_chance_result():  # Вычисление шанса поступления
     res = get_answer()
     all_res = [0] * len(get_questions_chance())
     answers = UserAnswers.query.filter(UserAnswers.id > 1).all()
@@ -102,19 +97,9 @@ def get_chance_result():
     return str(int(round((sum_res / (cnt * len(get_questions_chance()))), 2) * 100)) + '%'
 
 
-def delete_chance():
-    db.session.query(UserAnswers).delete()
-    db.session.commit()
-
-
-def chance_list():
-    # return UserAnswers.query.filter(UserAnswers.id < 4).all()
-    return UserAnswers.query.all()
-
-
 # Функции для тестов
 
-def get_questions_test_subject(subject):
+def get_questions_test_subject(subject):  # Поулчить все вопросы по заданному предмету
     questions = Questions.query.filter(Questions.subject == subject)
     questions_arr = []
     for elem in questions:
@@ -129,24 +114,7 @@ def get_questions_test_subject(subject):
     return questions_arr
 
 
-def add_question(q_dict, q_ans, q_var):
-    question = Questions(subject=q_dict['subject'], text=q_dict['text'], answer_type=q_dict['answer_type'],
-                         question_type=q_dict['question_type'])
-    db.session.add(question)
-    db.session.commit()
-
-    for var in q_var:
-        nvariant = QuestionsVariants(question_id=question.id, variant=var)
-        db.session.add(nvariant)
-        db.session.commit()
-
-    for ans in q_ans:
-        nanswer = QuestionsAnswers(question_id=question.id, answer=ans)
-        db.session.add(nanswer)
-        db.session.commit()
-
-
-def get_variants_by_id(qid):
+def get_variants_by_id(qid):  # Все варианты ответов по id опроса
     variants_db = QuestionsVariants.query.filter(QuestionsVariants.question_id == qid).all()
     variants = []
     for elem in variants_db:
@@ -154,7 +122,7 @@ def get_variants_by_id(qid):
     return variants
 
 
-def get_answer_by_id(qid):
+def get_answer_by_id(qid):  # Ответы на вопрос по его id
     answers_db = QuestionsAnswers.query.filter(QuestionsAnswers.question_id == qid).all()
     answers = []
     for elem in answers_db:
@@ -164,13 +132,13 @@ def get_answer_by_id(qid):
 
 # Управление пользователями и их тестами
 
-def add_new_user(user_login, user_password):
+def add_new_user(user_login, user_password):  # Добавить нового пользователя
     new_u = Users(user_login=user_login, user_password=generate_password_hash(user_password), new_u=1)
     db.session.add(new_u)
     db.session.commit()
 
 
-def check_login_pass(u_login, u_password):
+def check_login_pass(u_login, u_password):  # Проверить на корректность логин и пароль
     this_user = Users.query.filter(Users.user_login == u_login)
     arr = []
     for elem in this_user:
@@ -187,7 +155,8 @@ def check_login_pass(u_login, u_password):
         return "success"
 
 
-def check_user(user_login, user_password):
+def check_user(user_login,
+               user_password):  # Проверить, существует ли такой пользователь, и если существует, верны ли данные
     this_user = Users.query.filter(Users.user_login == user_login).first()
 
     if not this_user:
@@ -196,7 +165,7 @@ def check_user(user_login, user_password):
     return check_password_hash(this_user.user_password, user_password)
 
 
-def add_done_test(donetest):
+def add_done_test(donetest):  # Добавить выполненный тест в БД
     donet = DoneTests(user_id=current_user.id, subject=donetest.subject)
     db.session.add(donet)
     db.session.commit()
@@ -208,11 +177,11 @@ def add_done_test(donetest):
     return
 
 
-def get_tests_id_by_user_id(user_id):
+def get_tests_id_by_user_id(user_id):  # Получить все сделанные пользователем тесты
     return [elem.id for elem in DoneTests.query.filter(DoneTests.user_id == user_id)]
 
 
-def get_done_test_by_id(test_id):
+def get_done_test_by_id(test_id):  # Получить по id сделанный тест в виде объекта TestDone
     subject = (DoneTests.query.filter(DoneTests.id == test_id).first()).subject
     q_a = []
     for d_question in DoneQuestions.query.filter(DoneQuestions.test_id == test_id).all():
@@ -230,7 +199,7 @@ def get_done_test_by_id(test_id):
     return dt
 
 
-def get_test_result_by_id(test_id):
+def get_test_result_by_id(test_id):  # Получить результат сделанного теста по его id
     ans_arr = []
     for d_question in DoneQuestions.query.filter(DoneQuestions.test_id == test_id):
         ans_arr.append(d_question.result)
@@ -238,13 +207,13 @@ def get_test_result_by_id(test_id):
     return ans_arr
 
 
-def add_user_chance(user_id, chance, same_ch):
+def add_user_chance(user_id, chance, same_ch):  # Добавить вычисленный шанс поступления в БД
     new_obj = UserChance(user_id=user_id, chance=chance, same=same_ch)
     db.session.add(new_obj)
     db.session.commit()
 
 
-def get_user_chance(user_id):
+def get_user_chance(user_id):  # Получить шанс на поступление пользователя из БД
     try:
         res = UserChance.query.filter(UserChance.user_id == user_id).first()
         return res.chance, res.same  # Кортеж
@@ -252,27 +221,27 @@ def get_user_chance(user_id):
         return False
 
 
-def get_tests_id_by_user_id_and_subject(user_id, subj):
-    return [elem.id for elem in DoneTests.query.filter(DoneTests.user_id == user_id, DoneTests.subject == subj)]
+def get_tests_id_by_user_id_and_subject(user_id, subj): # Получить все сделанные пользователем тесты по предмету
+    return [elem.id for elem in DoneTests.query.filter(DoneTests.user_id == user_id, DoneTests.subject == subj)] # Пояснение: id каждого теста (elem), сделанного пользователем с id = user_id и имеющего предмет subject
 
 
-def get_av_result_by_subject_and_user_id(subj):
-    last_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, subj)
+def get_av_result_by_subject_and_user_id(subj): #Средний результат по предмету
+    last_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, subj) # Используется id глобальной переменной current_user
     last_results = []
     for d_test in last_tests_id:
         res = get_test_result_by_id(d_test)
         if len(res):
             last_results.append(math.floor(100 * sum(res) / len(res)))
-    return math.floor(sum(last_results) / (len(last_results) + int(len(last_results) == 0)))
+    return math.floor(sum(last_results) / (len(last_results) + int(len(last_results) == 0))) #Округление для процентов
 
 
-def get_all_results_by_subj(subj):
+def get_all_results_by_subj(subj): #Все результаты тестов по данному предмету
     last_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, subj)
     last_results = []
     for d_test in last_tests_id:
         res = get_test_result_by_id(d_test)
         if len(res):
-            last_results.append(math.floor(100 * sum(res) / len(res)))
+            last_results.append(math.floor(100 * sum(res) / len(res))) # Округление для процентов
 
     return last_results
 
@@ -288,8 +257,6 @@ def main():
 def calc_chance():
     global result, same
     if request.method == "POST":
-        # to_bd_chance()
-        # return render_template("chance_res.html", result=get_chance_result(), data=chance_list())
         result = get_chance_result()
         same = find_same_answer()
         if current_user.is_authenticated:
@@ -308,45 +275,10 @@ def calc_chance():
 @app.route('/chance/result')
 @login_required
 def show_res():
-    # to_bd_chance()
     return render_template("chance_res.html", result=result, same=same, cur_user=current_user,
                            done_first_test=current_user.done_first_test)
-    # return "Hello"
 
 
-@app.route('/delete', methods=['POST', 'GET'])
-@login_required
-def delete():
-    delete_chance()
-    return redirect('/')
-
-
-@app.route('/testall')
-def testall():
-    new_test = classes.Test(get_questions_test_subject('aleg'), 'aleg')
-    return render_template("test.html", test_questions=new_test.questions, types_array=new_test.types_arr(),
-                           cur_user=current_user)
-    # return render_template("test.html", test_questions=get_questions_test_subject("aleg"))
-
-
-@app.route('/admin', methods=['POST', 'GET'])
-def add():
-    if request.method == "POST":
-        if request.form["question-subject"] and request.form["question-answer-type"] and request.form[
-            "question-type"] and request.form["question-text"] and [request.form["question-answer"]]:
-            q_d = {}
-            q_d['subject'] = request.form["question-subject"]
-            q_d['answer_type'] = request.form["question-answer-type"]
-            q_d['question_type'] = request.form["question-type"]
-            q_d['text'] = request.form["question-text"]
-
-            q_a = [request.form["question-answer"]]
-
-            q_v = [request.form.get("question-variant" + str(i + 1)) for i in range(3)]
-
-            add_question(q_d, q_a, q_v)
-
-    return render_template("addq.html", cur_user=current_user)
 
 
 @app.route('/test', methods=['POST', 'GET'])
@@ -370,7 +302,7 @@ def test_ch():
                                r_all=get_av_result_by_subject_and_user_id("all"))
 
 
-@app.route('/test/<subj>/<num>', methods=['POST', 'GET'])
+@app.route('/test/<subj>/<num>', methods=['POST', 'GET']) #Для всех, кроме комплексного теста
 @login_required
 def test(subj, num):
     global cur_test
@@ -401,11 +333,7 @@ def test(subj, num):
 
         if len(last_done_tests_id) != 0:
             last_done_test_id = last_done_tests_id[-1]
-            last_done_test = get_done_test_by_id(last_done_test_id)
             last_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, done_test.subject)
-            last_tests = [get_done_test_by_id(t_id) for t_id in last_tests_id]
-
-            # last_results = [math.floor(sum(d_test.get_rw()) / len(d_test.get_rw())) for d_test in last_tests]
             last_results = []
             for d_test in last_tests_id:
                 res = get_test_result_by_id(d_test)
@@ -428,7 +356,7 @@ def test(subj, num):
     else:
         questions_r = random.sample(get_questions_test_subject(subj), int(num))
 
-        # new_test = classes.Test(get_questions_test_subject(subj), subj)
+
         new_test = Test(questions_r, subj)
         cur_test = new_test
 
@@ -467,11 +395,10 @@ def comp():
 
         if len(last_done_tests_id) != 0:
             last_done_test_id = last_done_tests_id[-1]
-            last_done_test = get_done_test_by_id(last_done_test_id)
-            last_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, done_test.subject)
-            last_tests = [get_done_test_by_id(t_id) for t_id in last_tests_id]
 
-            # last_results = [math.floor(sum(d_test.get_rw()) / len(d_test.get_rw())) for d_test in last_tests]
+            last_tests_id = get_tests_id_by_user_id_and_subject(current_user.id, done_test.subject)
+
+
             last_results = []
             for d_test in last_tests_id:
                 res = get_test_result_by_id(d_test)
@@ -496,7 +423,7 @@ def comp():
             random.sample(get_questions_test_subject('rus'), 6) + random.sample(get_questions_test_subject('math'), 6),
             12)
 
-        # new_test = classes.Test(get_questions_test_subject(subj), subj)
+
         new_test = Test(questions_r, 'all')
         cur_test = new_test
         start_time = datetime.datetime.now()
@@ -526,7 +453,6 @@ def register():
                 return redirect('/register')
             if res == "success":
                 add_new_user(n_login, n_pass)
-                # login_user(Users.query.filter(Users.user_login == n_login).first())
                 flash('You were successfully registered!', 'alert alert-success')
                 return redirect('/login')
 
@@ -594,7 +520,6 @@ def pr_tests():
     if not current_user.done_first_test:
         flash('Тест для определения начального уровня не пройден!', 'alert alert-danger')
         return redirect('/profile')
-    ut_id = get_tests_id_by_user_id(current_user.id)
     return render_template('tests_all_results.html', cur_user=current_user,
                            r_rus=get_all_results_by_subj("rus"), rav_rus=get_av_result_by_subject_and_user_id("rus"),
                            r_math=get_all_results_by_subj("math"),

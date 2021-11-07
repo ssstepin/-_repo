@@ -1,4 +1,4 @@
-from IVR_app import classes
+from IVR_app import classes  # Чтобы реализовать get_question_type
 
 
 class Question(object):
@@ -17,9 +17,9 @@ class Question(object):
         for ans in self.questionAnswer:
             right_answer.append(ans.lower())
         user_answers = []
-        for ans in set(user_answer):
+        for ans in set(user_answer):  # set, чтобы дополнительно исключить повторения
             user_answers.append(ans.lower())
-        return sorted(right_answer) == sorted(user_answers)
+        return sorted(right_answer) == sorted(user_answers)  # упорядочивание обоих списков
 
 
 class QuestionCheckbox(Question):
@@ -68,7 +68,7 @@ class Test(object):
         self.questions = question_arr
         self.subject = subject
 
-    def types_arr(self):
+    def types_arr(self):  # типы вопросов
         arr = []
         for elem in self.questions:
             arr.append(get_question_type(elem))
@@ -77,15 +77,15 @@ class Test(object):
 
 class TestDone(Test):
     def __init__(self, question_arr: list, subject: str, u_ans: list):
-        #super(Test, self).__init__(question_arr, subject)
         self.questions = question_arr
         self.subject = subject
         self.userAnswers = u_ans
-        
+
     def types_arr(self):
         return super(TestDone, self).types_arr()
 
-    def get_rw(self):
+    def get_rw(
+            self):  # rw = "right/wrong"; получить список результатов - 0, если на вопрос ответ неправильный, 1 - если правильный
         arr = []
         for i in range(len(self.questions)):
             if self.questions[i].check_answer(list(self.userAnswers[i])):

@@ -42,6 +42,7 @@ class Users(db.Model):
     new_u = db.Column(db.Integer)
     done_first_test = db.Column(db.Integer)
 
+    # Методы, нужные для класса, используемого для действий, связанных с пользователем (из документации flask_login)
     def is_active(self):
         return True
 
