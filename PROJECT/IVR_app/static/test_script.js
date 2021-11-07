@@ -13,14 +13,10 @@ for (let i = 0; i < q_n; ++i) {
     if (i !== 0) q_arr[i].q_obj.style.display = 'none';
 }
 
-//console.log(q_arr);
 
 q_arr.forEach(function (item, i, q_arr) {
-    //console.log(item);
     item.q_btn.addEventListener('click', function () {
-        //console.log(item);
         console.log(document.forms[0].elements['q' + String(item.number)]);
-        //if(typeof document.forms[0].elements['q' + String(item.number)] === 'array')
         if (document.forms[0].elements['q' + String(item.number)].length) {
             document.forms[0].elements['q' + String(item.number)].forEach(function (item2) {
                 if (item2.checked) {
@@ -54,6 +50,4 @@ const inputHandler = function (e) {
 let all_texts = document.querySelectorAll('input[type=text]');
 for (let i = 0; i < all_texts.length; ++i) {
     all_texts[i].addEventListener('input', inputHandler);
-    //all_texts[i].addEventListener('propertychange', inputHandler);
-    //all_texts[i].addEventListener('change', inputHandler);
 }
